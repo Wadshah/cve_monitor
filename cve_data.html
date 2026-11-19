@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CVE Monitor — new exploit and PoC repositories on GitHub</title>
-<meta name="description" content="Every public GitHub repository that names a CVE ID, collected every 3 hours. Search a CVE to find its proofs of concept, exploits, scanners and write-ups.">
+<meta name="description" content="Every public GitHub repository that names a CVE ID, collected every 90 minutes. Search a CVE to find its proofs of concept, exploits, scanners and write-ups.">
 <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0f0f10" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="CVE Monitor">
@@ -294,7 +294,7 @@
 <main class="wrap">
   <section class="intro" aria-labelledby="title">
     <h1 id="title">New CVE exploits and proofs of concept on GitHub</h1>
-    <p>Every public GitHub repository that names a CVE ID, collected every 3 hours. Search a CVE to see all its proofs of concept, exploits and scanners.</p>
+    <p>Every public GitHub repository that names a CVE ID, collected every 90 minutes. Search a CVE to see all its proofs of concept, exploits and scanners.</p>
     <div class="refresh" id="refresh" aria-live="polite">Loading…</div>
   </section>
 
@@ -354,7 +354,7 @@
       <section id="about" class="panel about" aria-labelledby="about-h">
         <h2 id="about-h">How it works</h2>
         <p><b>Source.</b> GitHub repository search for “CVE”, kept only when the name, description or topics contain a CVE ID such as CVE-2026-12345.</p>
-        <p><b>Refresh.</b> A scheduled job runs every 3 hours and adds repositories created since the last run.</p>
+        <p><b>Refresh.</b> A scheduled job runs every 90 minutes and adds repositories created since the last run.</p>
         <p class="warn"><b>Read before you run.</b> These are third-party repositories. Many proofs of concept are untested and some are malicious.</p>
       </section>
     </aside>
@@ -395,9 +395,9 @@
     const d = h / 24; if (d < 31) return Math.floor(d) + (Math.floor(d) === 1 ? " day ago" : " days ago");
     return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(new Date(iso));
   }
-  function nextRun() { // cron "17 */3 * * *" (UTC)
-    const n = new Date(); const t = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate(), n.getUTCHours(), 17));
-    while (t <= n || t.getUTCHours() % 3) t.setUTCHours(t.getUTCHours() + 1);
+  function nextRun() { // crons "7 */3 * * *" + "37 1-23/3 * * *" (UTC): every 90 min from 00:07
+    const n = new Date(); const t = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate(), 0, 7));
+    while (t <= n) t.setUTCMinutes(t.getUTCMinutes() + 90);
     const m = Math.round((t - n) / 6e4);
     return m < 60 ? "in " + m + " min" : "in about " + Math.round(m / 60) + " h";
   }

@@ -1,6 +1,6 @@
 # CVE Monitor
 
-New CVE exploit, proof-of-concept and scanner repositories on GitHub, refreshed every 3 hours.
+New CVE exploit, proof-of-concept and scanner repositories on GitHub, refreshed every 90 minutes.
 
 **Browse and search:** https://wadshah.github.io/cve_monitor/cve_data.html
 

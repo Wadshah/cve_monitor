@@ -28,6 +28,8 @@
     --ink: #18181a; --ink-2: #3f3f46; --muted: #68686e;
     --accent: #c2410c; --accent-hover: #9a3412; --accent-soft: #fdf0e9; --on-accent: #ffffff;
     --bar: #f0c9b5;
+    --trend: #0f766e; --trend-soft: #ecf7f4; --trend-bar: #8fd0c4;
+    --info: #1d4ed8; --info-soft: #eef3fe;
     --skeleton: #efeeeb;
     color-scheme: light;
   }
@@ -37,6 +39,8 @@
     --ink: #ededec; --ink-2: #c8c8cc; --muted: #9a9aa1;
     --accent: #fb7a45; --accent-hover: #fd9a70; --accent-soft: rgba(251, 122, 69, .13); --on-accent: #1a0c05;
     --bar: rgba(251, 122, 69, .38);
+    --trend: #2dd4bf; --trend-soft: rgba(45, 212, 191, .12); --trend-bar: rgba(45, 212, 191, .5);
+    --info: #60a5fa; --info-soft: rgba(96, 165, 250, .12);
     --skeleton: #1e1e21;
     color-scheme: dark;
   }
@@ -73,6 +77,11 @@
   .nav a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 10px; border-radius: 8px; color: var(--muted);
     text-decoration: none; font-weight: 500; font-size: 14px; transition: color .15s, background-color .15s; }
   .nav a:hover { color: var(--ink); background: var(--surface-2); }
+  .nav a::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--c); margin-right: 8px; flex: none; }
+  .nav a[href="#feed"] { --c: var(--accent); }
+  .nav a[href="#trending"] { --c: var(--trend); }
+  .nav a[href="#about"] { --c: var(--info); }
+
   .theme { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 8px;
     border: 1px solid var(--line-2); background: var(--surface); cursor: pointer; font-size: 14px; font-weight: 500; color: var(--ink-2);
     transition: border-color .15s, color .15s, transform .1s; }
@@ -99,7 +108,17 @@
   .kpi dt { margin-top: 2px; font-size: 13px; color: var(--muted); }
 
   /* Layout */
-  .cols { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 40px; align-items: start; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
+
+  /* Each section has its own colour: feed = orange, trending = teal, how it works = blue */
+  #feed { --c: var(--accent); --c-soft: var(--surface); }
+  #trending { --c: var(--trend); --c-soft: var(--trend-soft); }
+  #about { --c: var(--info); --c-soft: var(--info-soft); }
+  .panel { background: var(--c-soft); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 12px; padding: 18px 20px 20px; }
+  .panel h2 { display: flex; align-items: center; gap: 10px; }
+  .panel h2::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--c); flex: none; }
+  .panel.flash { animation: flash 1.6s ease-out; }
+  @keyframes flash { 0%, 30% { box-shadow: 0 0 0 3px var(--c); } 100% { box-shadow: 0 0 0 3px transparent; } }
   .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
   h2 { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: -.01em; }
   .count { color: var(--muted); font-size: 14px; }
@@ -139,7 +158,7 @@
   .thead { font-size: 12.5px; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--line); padding-top: 8px; padding-bottom: 8px; }
   .thead .r, .row .r { text-align: right; }
   .row { border-bottom: 1px solid var(--line); align-items: start; transition: background-color .12s; }
-  .row:hover { background: var(--surface); }
+  .row:hover { background: var(--surface-2); }
   .cves { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
   .cve { border: 0; background: none; padding: 0; cursor: pointer; color: var(--accent); font-weight: 600; font-size: 14px; white-space: nowrap;
     text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color .15s; }
@@ -187,15 +206,16 @@
   .top button { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; padding: 9px 4px; border: 0;
     background: none; cursor: pointer; text-align: left; border-radius: 6px; transition: background-color .12s; }
   .top button:hover { background: var(--surface); }
+  .top button:focus-visible { outline-color: var(--trend); }
   .top .id { font-weight: 600; font-size: 14px; color: var(--ink); }
-  .top button:hover .id { color: var(--accent); }
+  .top button:hover .id { color: var(--trend); }
   .top .n { font-size: 13px; color: var(--muted); }
-  .top .meter { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
-  .top .meter span { display: block; height: 100%; background: var(--bar); border-radius: 2px; }
+  .top .meter { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+  .top .meter span { display: block; height: 100%; background: var(--trend-bar); border-radius: 2px; }
   .about p { margin: 0 0 10px; font-size: 14px; color: var(--ink-2); }
-  .about p b { color: var(--ink); font-weight: 600; }
-  .warn { padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-2); font-size: 13.5px; color: var(--ink-2); }
-  .warn b { color: var(--ink); }
+  .about p b { color: var(--info); font-weight: 600; }
+  .warn { padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--surface); font-size: 13.5px; color: var(--ink-2); }
+  .warn b { color: var(--ink) !important; }
 
   footer { margin-top: 64px; border-top: 1px solid var(--line); }
   footer .wrap { padding-top: 20px; padding-bottom: 32px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 13px; }
@@ -230,6 +250,7 @@
     .thead { display: none; }
     .row { grid-template-columns: 1fr; gap: 2px; padding: 12px 0; }
     .row:hover { background: none; }
+    .panel { padding: 14px 14px 16px; }
     .row > .lang, .row > .stars, .row > .age { display: none; }
     .cves { flex-direction: row; flex-wrap: wrap; gap: 0 14px; align-items: center; }
     .cve { min-height: 44px; }
@@ -285,7 +306,7 @@
   </dl>
 
   <div class="cols">
-    <section id="feed" aria-labelledby="feed-h">
+    <section id="feed" class="panel" aria-labelledby="feed-h">
       <div class="head">
         <h2 id="feed-h">Latest repositories</h2>
         <span class="count" id="count" aria-live="polite"></span>
@@ -325,12 +346,12 @@
     </section>
 
     <aside>
-      <section id="trending" aria-labelledby="trend-h">
+      <section id="trending" class="panel" aria-labelledby="trend-h">
         <h2 id="trend-h">Most active CVEs this week</h2>
         <p class="sub">CVEs with the most new repositories in the last 7 days.</p>
         <ol class="top" id="top"></ol>
       </section>
-      <section id="about" class="about" aria-labelledby="about-h">
+      <section id="about" class="panel about" aria-labelledby="about-h">
         <h2 id="about-h">How it works</h2>
         <p><b>Source.</b> GitHub repository search for “CVE”, kept only when the name, description or topics contain a CVE ID such as CVE-2026-12345.</p>
         <p><b>Refresh.</b> A scheduled job runs every 3 hours and adds repositories created since the last run.</p>
@@ -619,6 +640,14 @@
     if (e.key === "/" && !/^(input|select|textarea)$/i.test(document.activeElement.tagName)) { e.preventDefault(); $("q").focus(); }
   });
   addEventListener("popstate", () => { readURL(); syncControls(); run({ keepPage: true }); });
+
+  // ---------- nav: show where a section link landed ----------
+  document.querySelectorAll('.nav a[href^="#"]').forEach((a) => a.addEventListener("click", () => {
+    const t = document.getElementById(a.getAttribute("href").slice(1));
+    if (!t) return;
+    t.classList.remove("flash"); void t.offsetWidth; t.classList.add("flash");
+    setTimeout(() => t.classList.remove("flash"), 1600);
+  }));
 
   // ---------- boot ----------
   (async () => {

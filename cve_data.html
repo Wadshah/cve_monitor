@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CVE Monitor — new exploit and PoC repositories on GitHub</title>
+<meta name="description" content="Every public GitHub repository that names a CVE ID, collected every 3 hours. Search a CVE to find its proofs of concept, exploits, scanners and write-ups.">
+<meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f0f10" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="CVE Monitor">
+<meta property="og:description" content="New exploit, PoC and scanner repositories on GitHub, by CVE.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c2410c'/%3E%3Cpath d='M9 16h14M16 9v14' stroke='white' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("cvem-theme"); } catch (e) {}
+    if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+<style>
+  :root, :root[data-theme="light"] {
+    --bg: #fafaf9; --surface: #ffffff; --surface-2: #f3f3f1;
+    --line: #e7e5e1; --line-2: #d4d1cb;
+    --ink: #18181a; --ink-2: #3f3f46; --muted: #68686e;
+    --accent: #c2410c; --accent-hover: #9a3412; --accent-soft: #fdf0e9; --on-accent: #ffffff;
+    --bar: #f0c9b5;
+    --skeleton: #efeeeb;
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f0f10; --surface: #161618; --surface-2: #1d1d20;
+    --line: #27272a; --line-2: #3a3a40;
+    --ink: #ededec; --ink-2: #c8c8cc; --muted: #9a9aa1;
+    --accent: #fb7a45; --accent-hover: #fd9a70; --accent-soft: rgba(251, 122, 69, .13); --on-accent: #1a0c05;
+    --bar: rgba(251, 122, 69, .38);
+    --skeleton: #1e1e21;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; scroll-padding-top: 76px; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 Geist, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  a { color: inherit; }
+  button, input, select { font: inherit; color: inherit; }
+  h1, h2, h3 { text-wrap: balance; }
+  .wrap { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .skip { position: absolute; left: 16px; top: -60px; z-index: 50; background: var(--ink); color: var(--bg); padding: 12px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+  .skip:focus { top: 12px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  /* Top bar */
+  .bar { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .bar .wrap { display: flex; align-items: center; gap: 24px; height: 60px; }
+  .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: -.01em; text-decoration: none; min-height: 44px; white-space: nowrap; flex: none; }
+  .nav a { white-space: nowrap; }
+  .nav .short { display: none; }
+  .filters label { display: block; min-width: 0; }
+  .filters select { width: 100%; }
+  .brand i { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); position: relative; flex: none; }
+  .brand i::before, .brand i::after { content: ""; position: absolute; background: var(--on-accent); border-radius: 2px; }
+  .brand i::before { left: 5px; right: 5px; top: 10px; height: 2.4px; }
+  .brand i::after { top: 5px; bottom: 5px; left: 10px; width: 2.4px; }
+  .nav { display: flex; gap: 4px; margin-right: auto; }
+  .nav a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 10px; border-radius: 8px; color: var(--muted);
+    text-decoration: none; font-weight: 500; font-size: 14px; transition: color .15s, background-color .15s; }
+  .nav a:hover { color: var(--ink); background: var(--surface-2); }
+  .theme { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 8px;
+    border: 1px solid var(--line-2); background: var(--surface); cursor: pointer; font-size: 14px; font-weight: 500; color: var(--ink-2);
+    transition: border-color .15s, color .15s, transform .1s; }
+  .theme:hover { color: var(--ink); border-color: var(--muted); }
+  .theme:active { transform: scale(.97); }
+  .theme svg { width: 16px; height: 16px; }
+  :root[data-theme="dark"] .i-moon, :root[data-theme="light"] .i-sun { display: none; }
+
+  /* Intro */
+  .intro { padding: 44px 0 28px; animation: enter .5s ease-out both; }
+  @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .intro h1 { margin: 0 0 12px; font-size: clamp(28px, 4vw, 40px); line-height: 1.15; letter-spacing: -.03em; font-weight: 700; max-width: 760px; }
+  .intro p { margin: 0; max-width: 680px; color: var(--ink-2); font-size: 16px; }
+  .refresh { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--muted); }
+  .refresh b { color: var(--ink); font-weight: 600; }
+  .refresh .ok { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #16a34a; margin-right: 7px; vertical-align: 1px; }
+  .refresh .ok.stale { background: var(--muted); }
+
+  /* KPIs */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); margin: 0 0 36px; padding: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .kpi { display: flex; flex-direction: column-reverse; justify-content: flex-end; padding: 18px 20px 18px 0; margin: 0; }
+  .kpi + .kpi { padding-left: 20px; border-left: 1px solid var(--line); }
+  .kpi dd { margin: 0; font-size: 30px; line-height: 1.15; font-weight: 600; letter-spacing: -.02em; }
+  .kpi dt { margin-top: 4px; font-size: 13px; color: var(--muted); }
+
+  /* Layout */
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 40px; align-items: start; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  h2 { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: -.01em; }
+  .count { color: var(--muted); font-size: 14px; }
+
+  /* Filters */
+  .filters { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; margin-bottom: 8px; }
+  .search { position: relative; }
+  .search svg { position: absolute; left: 12px; top: 50%; width: 17px; height: 17px; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .search input { width: 100%; height: 42px; padding: 0 12px 0 38px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--surface);
+    transition: border-color .15s, box-shadow .15s; }
+  .search input::placeholder { color: var(--muted); }
+  .search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  select { height: 42px; padding: 0 30px 0 12px; border-radius: 8px; border: 1px solid var(--line-2); background-color: var(--surface); color: var(--ink);
+    appearance: none; cursor: pointer; font-size: 14px; font-weight: 500;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 18px, calc(100% - 11px) 18px; background-size: 5px 5px; background-repeat: no-repeat; }
+  select:hover { border-color: var(--muted); }
+  .range { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
+  .range button { height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid transparent; background: none; cursor: pointer;
+    color: var(--muted); font-size: 14px; font-weight: 500; transition: color .15s, background-color .15s, border-color .15s; }
+  .range button:hover { color: var(--ink); background: var(--surface-2); }
+  .range button[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); border-color: transparent; font-weight: 600; }
+
+  /* CVE banner */
+  .cvebar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 14px 16px; margin-bottom: 14px; border-radius: 12px;
+    background: var(--accent-soft); }
+  .cvebar strong { font-size: 17px; font-weight: 700; color: var(--accent); }
+  .cvebar span { color: var(--ink-2); font-size: 14px; }
+  .cvebar a, .linkbtn { color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: underline; text-decoration-color: var(--line-2);
+    text-underline-offset: 3px; background: none; border: 0; padding: 0; cursor: pointer; transition: text-decoration-color .15s; }
+  .cvebar a:hover, .linkbtn:hover { text-decoration-color: currentColor; }
+  .cvebar .end { margin-left: auto; display: flex; gap: 16px; }
+
+  /* Rows */
+  .table { border-top: 1px solid var(--line); }
+  .thead, .row { display: grid; grid-template-columns: 150px minmax(0, 1fr) 110px 64px 84px; gap: 16px; padding: 12px 8px; }
+  .thead { font-size: 12.5px; font-weight: 500; color: var(--muted); border-bottom: 1px solid var(--line); padding-top: 8px; padding-bottom: 8px; }
+  .thead .r, .row .r { text-align: right; }
+  .row { border-bottom: 1px solid var(--line); align-items: start; transition: background-color .12s; }
+  .row:hover { background: var(--surface); }
+  .cves { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+  .cve { border: 0; background: none; padding: 0; cursor: pointer; color: var(--accent); font-weight: 600; font-size: 14px; white-space: nowrap;
+    text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color .15s; }
+  .cve:hover { text-decoration-color: currentColor; }
+  .more { font-size: 12.5px; color: var(--muted); }
+  .repo { min-width: 0; }
+  .repo a { font-weight: 600; text-decoration: none; overflow-wrap: anywhere; background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+    transition: background-size .2s; }
+  .repo a:hover { background-size: 100% 1px; }
+  .repo a .o { color: var(--muted); font-weight: 500; }
+  .repo p { margin: 3px 0 0; color: var(--ink-2); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .repo p.none { color: var(--muted); }
+  .lang { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--ink-2); min-width: 0; }
+  .lang i { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .stars, .age { font-size: 13.5px; color: var(--muted); }
+  .age.fresh { color: var(--accent); font-weight: 600; }
+  .m-meta { display: none; }
+
+  .skel { height: 64px; border-bottom: 1px solid var(--line); position: relative; }
+  .skel::before, .skel::after { content: ""; position: absolute; left: 8px; height: 12px; border-radius: 4px; background: var(--skeleton); }
+  .skel::before { top: 16px; width: 40%; }
+  .skel::after { top: 36px; width: 70%; }
+
+  .empty { padding: 40px 16px; text-align: center; color: var(--ink-2); border-bottom: 1px solid var(--line); }
+  .empty strong { display: block; color: var(--ink); font-size: 16px; margin-bottom: 4px; }
+  .empty .acts { margin-top: 14px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 14px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; font-weight: 600; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink);
+    transition: border-color .15s, background-color .15s, transform .1s; text-decoration: none; }
+  .btn:hover { border-color: var(--muted); }
+  .btn:active { transform: scale(.98); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn:disabled { opacity: .45; cursor: default; transform: none; }
+
+  .pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; color: var(--muted); font-size: 14px; }
+
+  /* Side column */
+  aside { position: sticky; top: 84px; display: grid; gap: 28px; }
+  aside h2 { font-size: 15px; margin-bottom: 4px; }
+  aside .sub { font-size: 13px; color: var(--muted); margin: 0 0 10px; }
+  .top { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .top li { border-bottom: 1px solid var(--line); }
+  .top button { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; padding: 9px 4px; border: 0;
+    background: none; cursor: pointer; text-align: left; border-radius: 6px; transition: background-color .12s; }
+  .top button:hover { background: var(--surface); }
+  .top .id { font-weight: 600; font-size: 14px; color: var(--ink); }
+  .top button:hover .id { color: var(--accent); }
+  .top .n { font-size: 13px; color: var(--muted); }
+  .top .meter { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+  .top .meter span { display: block; height: 100%; background: var(--bar); border-radius: 2px; }
+  .about p { margin: 0 0 10px; font-size: 14px; color: var(--ink-2); }
+  .about p b { color: var(--ink); font-weight: 600; }
+  .warn { padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-2); font-size: 13.5px; color: var(--ink-2); }
+  .warn b { color: var(--ink); }
+
+  footer { margin-top: 64px; border-top: 1px solid var(--line); }
+  footer .wrap { padding-top: 20px; padding-bottom: 32px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 13px; }
+
+  @media (max-width: 980px) {
+    .cols { grid-template-columns: 1fr; gap: 44px; }
+    aside { position: static; grid-template-columns: 1fr 1fr; gap: 32px; }
+  }
+  @media (max-width: 820px) {
+    .wrap { padding: 0 16px; }
+    .bar .wrap { gap: 8px; }
+    .nav { margin-left: auto; margin-right: 0; }
+    .nav a, .theme, .brand { min-height: 44px; height: 44px; }
+    .nav .opt, .nav .long { display: none; }
+    .nav .short { display: inline; }
+    .nav a { padding: 0 8px; }
+    .head { flex-direction: column; align-items: flex-start; gap: 2px; }
+    .theme .lbl { display: none; }
+    .theme { width: 44px; padding: 0; justify-content: center; }
+    .intro { padding: 28px 0 20px; }
+    .intro p { font-size: 15px; }
+    .kpis { grid-template-columns: 1fr 1fr; margin-bottom: 28px; }
+    .kpi, .kpi + .kpi { padding: 14px 12px 14px 0; border-left: 0; }
+    .kpi:nth-child(even) { padding-left: 14px; border-left: 1px solid var(--line); }
+    .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+    .kpi dd { font-size: 24px; }
+    .filters { grid-template-columns: 1fr 1fr; }
+    .search { grid-column: 1 / -1; }
+    .search input, select { height: 44px; }
+    .range { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .range button { height: 44px; padding: 0 4px; }
+    .thead { display: none; }
+    .row { grid-template-columns: 1fr; gap: 2px; padding: 12px 0; }
+    .row:hover { background: none; }
+    .row > .lang, .row > .stars, .row > .age { display: none; }
+    .cves { flex-direction: row; flex-wrap: wrap; gap: 0 14px; align-items: center; }
+    .cve { min-height: 44px; }
+    .repo a { display: inline-flex; align-items: center; min-height: 44px; font-size: 15.5px; background: none; }
+    .repo p { margin-top: 0; }
+    .m-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; }
+    .btn, .linkbtn { min-height: 44px; }
+    .cvebar a { display: inline-flex; align-items: center; min-height: 44px; }
+    .cvebar .end { margin-left: 0; }
+    aside { grid-template-columns: 1fr; }
+    .top button { min-height: 52px; }
+  }
+  @media (max-width: 370px) {
+    .nav { display: none; }
+    .theme { margin-left: auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#feed">Skip to the feed</a>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="./cve_data.html" aria-label="CVE Monitor home"><i aria-hidden="true"></i><span>CVE Monitor</span></a>
+    <nav class="nav" aria-label="Sections">
+      <a class="opt" href="#feed">Feed</a>
+      <a href="#trending">Trending</a>
+      <a href="#about"><span class="long">How it works</span><span class="short">About</span></a>
+    </nav>
+    <button class="theme" id="theme" type="button" aria-label="Switch theme">
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <span class="lbl" id="theme-lbl">Dark</span>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="intro" aria-labelledby="title">
+    <h1 id="title">New CVE exploits and proofs of concept on GitHub</h1>
+    <p>Every public GitHub repository that names a CVE ID, collected every 3 hours. Search a CVE to see its proofs of concept, exploits, scanners and write-ups in one list.</p>
+    <div class="refresh" id="refresh" aria-live="polite">Loading…</div>
+  </section>
+
+  <dl class="kpis" aria-label="Summary">
+    <div class="kpi"><dt>New repositories in the last 24 hours</dt><dd id="k-24h">–</dd></div>
+    <div class="kpi"><dt>New repositories in the last 7 days</dt><dd id="k-7d">–</dd></div>
+    <div class="kpi"><dt>CVEs with new code this week</dt><dd id="k-cves">–</dd></div>
+    <div class="kpi"><dt>Repositories tracked in total</dt><dd id="k-total">–</dd></div>
+  </dl>
+
+  <div class="cols">
+    <section id="feed" aria-labelledby="feed-h">
+      <div class="head">
+        <h2 id="feed-h">Latest repositories</h2>
+        <span class="count" id="count" aria-live="polite"></span>
+      </div>
+
+      <div class="filters">
+        <label class="search">
+          <span class="sr-only">Search repositories</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" id="q" name="q" placeholder="Search a CVE ID, product or author, e.g. CVE-2026-123007…" autocomplete="off" spellcheck="false" enterkeyhint="search">
+        </label>
+        <label><span class="sr-only">Language</span><select id="lang" name="lang"><option value="">All languages</option></select></label>
+        <label><span class="sr-only">Sort by</span><select id="sort" name="sort">
+          <option value="new">Newest first</option>
+          <option value="stars">Most stars</option>
+        </select></label>
+      </div>
+      <div class="range" role="group" aria-label="Created within">
+        <button type="button" data-range="1" aria-pressed="false">24 hours</button>
+        <button type="button" data-range="7" aria-pressed="true">7 days</button>
+        <button type="button" data-range="30" aria-pressed="false">30 days</button>
+        <button type="button" data-range="0" aria-pressed="false">All time</button>
+      </div>
+
+      <div class="cvebar" id="cvebar" hidden></div>
+
+      <div class="table" role="list" aria-label="Repositories">
+        <div class="thead" aria-hidden="true"><span>CVE</span><span>Repository</span><span>Language</span><span class="r">Stars</span><span class="r">Added</span></div>
+        <div id="rows"></div>
+      </div>
+
+      <div class="pager" id="pager" hidden>
+        <button class="btn" id="prev" type="button">Previous</button>
+        <span id="pageinfo"></span>
+        <button class="btn" id="next" type="button">Next</button>
+      </div>
+    </section>
+
+    <aside>
+      <section id="trending" aria-labelledby="trend-h">
+        <h2 id="trend-h">Most active CVEs this week</h2>
+        <p class="sub">CVEs with the most new repositories in the last 7 days.</p>
+        <ol class="top" id="top"></ol>
+      </section>
+      <section id="about" class="about" aria-labelledby="about-h">
+        <h2 id="about-h">How it works</h2>
+        <p><b>Source.</b> GitHub repository search for “CVE”, kept only when the name, description or topics contain a CVE ID such as CVE-2026-12345.</p>
+        <p><b>Refresh.</b> A scheduled job runs every 3 hours and adds repositories created since the last run.</p>
+        <p class="warn"><b>Read before you run.</b> These are third-party repositories. Many proofs of concept are untested and some are malicious.</p>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Data from the GitHub search API. Not affiliated with GitHub, MITRE or NIST.</span>
+    <span id="foot-updated"></span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const PAGE = 50, DAY = 864e5;
+  const CVE_ONLY = /^cve-\d{4}-\d{4,7}$/i;
+  const $ = (id) => document.getElementById(id);
+  const nf = new Intl.NumberFormat();
+  const df = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
+  const LANG = { Python: "#3572A5", Go: "#00ADD8", JavaScript: "#e9d44a", TypeScript: "#3178c6", Java: "#b07219", C: "#6e6e6e",
+    "C++": "#f34b7d", "C#": "#178600", Rust: "#dea584", Ruby: "#701516", PHP: "#4F5D95", Shell: "#89e051", PowerShell: "#2c6fb5",
+    HTML: "#e34c26", CSS: "#663399", Kotlin: "#A97BFF", Swift: "#F05138", Perl: "#0298c3", Lua: "#3d3dbb", Nim: "#e0a800",
+    Dockerfile: "#384d54", YAML: "#cb171e", Makefile: "#427819", Assembly: "#6E4C13", Vue: "#41b883", Dart: "#00B4AB",
+    "Jupyter Notebook": "#DA5B0B", Solidity: "#AA6746", Zig: "#ec915c", Elixir: "#6e4a7e", Batchfile: "#8fae1e", Smali: "#999" };
+
+  const cache = {};
+  let index = null, recent = [], pool = [], view = [];
+  const st = { q: "", range: 7, lang: "", sort: "new", page: 0 };
+
+  // ---------- helpers ----------
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  function ago(iso) {
+    const m = (Date.now() - Date.parse(iso)) / 6e4;
+    if (m < 1) return "just now";
+    if (m < 60) return Math.floor(m) + " min ago";
+    const h = m / 60; if (h < 24) return Math.floor(h) + " h ago";
+    const d = h / 24; if (d < 31) return Math.floor(d) + (Math.floor(d) === 1 ? " day ago" : " days ago");
+    return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(new Date(iso));
+  }
+  function nextRun() { // cron "17 */3 * * *" (UTC)
+    const n = new Date(); const t = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate(), n.getUTCHours(), 17));
+    while (t <= n || t.getUTCHours() % 3) t.setUTCHours(t.getUTCHours() + 1);
+    const m = Math.round((t - n) / 6e4);
+    return m < 60 ? "in " + m + " min" : "in about " + Math.round(m / 60) + " h";
+  }
+
+  // ---------- theme ----------
+  function paintThemeBtn() {
+    const dark = document.documentElement.dataset.theme === "dark";
+    $("theme").setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+    $("theme-lbl").textContent = dark ? "Light" : "Dark";
+  }
+  $("theme").addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("cvem-theme", next); } catch (e) {}
+    paintThemeBtn();
+  });
+  paintThemeBtn();
+
+  // ---------- data ----------
+  async function getJSON(path) {
+    const r = await fetch(path + "?v=" + encodeURIComponent(index ? index.updated : Date.now()), { cache: "no-cache" });
+    if (!r.ok) throw new Error("HTTP " + r.status + " for " + path);
+    return r.json();
+  }
+  async function years(list) {
+    await Promise.all(list.filter((y) => !cache[y]).map(async (y) => { cache[y] = await getJSON("data/" + y + ".json"); }));
+    return list.flatMap((y) => cache[y]);
+  }
+  const allYears = () => index.years.map((y) => y.year);
+  function yearsFor(days) {
+    if (!days) return allYears();
+    const from = new Date(Date.now() - days * DAY).getUTCFullYear();
+    return allYears().filter((y) => +y >= from);
+  }
+  const effRange = () => st.range;
+
+  // ---------- URL state ----------
+  function readURL() {
+    const p = new URLSearchParams(location.search);
+    st.q = p.get("q") || "";
+    // A full CVE ID defaults to all time: people want every repository for it.
+    st.range = p.has("range") ? Math.max(0, parseInt(p.get("range"), 10) || 0) : (CVE_ONLY.test(st.q.trim()) ? 0 : 7);
+    if (![0, 1, 7, 30].includes(st.range)) st.range = 7;
+    st.lang = p.get("lang") || "";
+    st.sort = p.get("sort") === "stars" ? "stars" : "new";
+    st.page = Math.max(0, (parseInt(p.get("page"), 10) || 1) - 1);
+  }
+  function writeURL(push) {
+    const p = new URLSearchParams();
+    if (st.q) p.set("q", st.q);
+    const defRange = CVE_ONLY.test(st.q.trim()) ? 0 : 7;
+    if (st.range !== defRange) p.set("range", st.range);
+    if (st.lang) p.set("lang", st.lang);
+    if (st.sort !== "new") p.set("sort", st.sort);
+    if (st.page) p.set("page", st.page + 1);
+    const url = location.pathname + (p.toString() ? "?" + p : "") + location.hash;
+    history[push ? "pushState" : "replaceState"](null, "", url);
+  }
+  function syncControls() {
+    $("q").value = st.q;
+    $("sort").value = st.sort;
+    document.querySelectorAll(".range button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.range === st.range)));
+  }
+
+  // ---------- summary ----------
+  function summary() {
+    const now = Date.now(); let d1 = 0, d7 = 0; const counts = new Map();
+    for (const r of recent) {
+      const age = now - Date.parse(r.created);
+      if (age < DAY) d1++;
+      if (age < 7 * DAY) { d7++; for (const c of r.cves) counts.set(c, (counts.get(c) || 0) + 1); }
+    }
+    $("k-24h").textContent = nf.format(d1);
+    $("k-7d").textContent = nf.format(d7);
+    $("k-cves").textContent = nf.format(counts.size);
+    $("k-total").textContent = nf.format(index.total);
+
+    const upd = new Date(index.updated);
+    const stale = now - upd > 12 * 36e5;
+    const rf = $("refresh"); rf.replaceChildren();
+    const a = el("span"); const dot = el("i", "ok" + (stale ? " stale" : "")); dot.setAttribute("aria-hidden", "true");
+    a.append(dot, "Last refresh ", el("b", null, ago(index.updated)));
+    a.title = df.format(upd);
+    rf.append(a, el("span", null, "Next refresh " + nextRun()));
+    $("foot-updated").textContent = "Updated " + df.format(upd);
+
+    const top = [...counts.entries()].sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0])).slice(0, 10);
+    const max = top.length ? top[0][1] : 1;
+    const ol = $("top"); ol.replaceChildren();
+    for (const [id, n] of top) {
+      const li = el("li"); const b = el("button"); b.type = "button";
+      b.append(el("span", "id", id), el("span", "n", n + (n === 1 ? " repo" : " repos")));
+      const m = el("span", "meter"); const fill = el("span"); fill.style.width = Math.max(4, (n / max) * 100) + "%"; m.append(fill); b.append(m);
+      b.setAttribute("aria-label", id + ", " + n + " new repositories this week");
+      b.addEventListener("click", () => showCVE(id));
+      li.append(b); ol.append(li);
+    }
+    if (!top.length) ol.append(el("li", "sub", "No CVE has more than one new repository this week yet."));
+  }
+
+  function fillLanguages(list) {
+    const counts = new Map();
+    for (const r of list) if (r.lang) counts.set(r.lang, (counts.get(r.lang) || 0) + 1);
+    const sel = $("lang"); const keep = st.lang;
+    sel.replaceChildren(new Option("All languages", ""));
+    for (const [l] of [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20)) sel.append(new Option(l, l));
+    if (keep && !counts.has(keep)) sel.append(new Option(keep, keep));
+    sel.value = keep;
+  }
+
+  // ---------- feed ----------
+  function skeleton() { const f = document.createDocumentFragment(); for (let i = 0; i < 8; i++) f.append(el("div", "skel")); $("rows").replaceChildren(f); $("pager").hidden = true; }
+
+  async function run(opts = {}) {
+    const days = effRange();
+    const need = yearsFor(days);
+    if (need.some((y) => !cache[y])) { skeleton(); $("count").textContent = "Loading…"; }
+    try { pool = await years(need); }
+    catch (e) { return fail(e); }
+    const q = st.q.trim().toLowerCase(), terms = q ? q.split(/\s+/) : [];
+    const cutoff = days ? Date.now() - days * DAY : 0;
+    const exact = CVE_ONLY.test(q) ? q.toUpperCase() : null;
+    view = pool.filter((r) => {
+      if (cutoff && Date.parse(r.created) < cutoff) return false;
+      if (st.lang && r.lang !== st.lang) return false;
+      if (exact) return r.cves.includes(exact);
+      if (!terms.length) return true;
+      const hay = (r.name + " " + r.desc + " " + r.cves.join(" ") + " " + r.lang).toLowerCase();
+      return terms.every((t) => hay.includes(t));
+    });
+    if (st.sort === "stars") view.sort((a, b) => b.stars - a.stars || b.created.localeCompare(a.created));
+    else view.sort((a, b) => b.created.localeCompare(a.created) || b.id - a.id);
+    if (!opts.keepPage) st.page = 0;
+    fillLanguages(pool.filter((r) => !cutoff || Date.parse(r.created) >= cutoff));
+    render(exact);
+    writeURL(opts.push);
+  }
+
+  function render(exact) {
+    const pages = Math.max(1, Math.ceil(view.length / PAGE));
+    st.page = Math.min(st.page, pages - 1);
+    const start = st.page * PAGE;
+    const days = effRange();
+    const span = days === 1 ? "in the last 24 hours" : days ? "in the last " + days + " days" : "in total";
+
+    $("feed-h").textContent = exact ? "Repositories for " + exact : st.q.trim() ? "Search results" : "Latest repositories";
+    $("count").textContent = nf.format(view.length) + (view.length === 1 ? " repository " : " repositories ") + span;
+
+    const bar = $("cvebar"); bar.replaceChildren(); bar.hidden = !exact;
+    if (exact) {
+      bar.append(el("strong", null, exact), el("span", null, nf.format(view.length) + (view.length === 1 ? " repository on GitHub" : " repositories on GitHub")));
+      const end = el("span", "end");
+      const nvd = el("a", null, "Read the NVD entry"); nvd.href = "https://nvd.nist.gov/vuln/detail/" + exact; nvd.target = "_blank"; nvd.rel = "noopener noreferrer";
+      const back = el("button", "linkbtn", "Show all repositories"); back.type = "button"; back.addEventListener("click", clearAll);
+      end.append(nvd, back); bar.append(end);
+    }
+
+    const f = document.createDocumentFragment();
+    for (const r of view.slice(start, start + PAGE)) f.append(row(r));
+    if (!view.length) {
+      const e = el("div", "empty");
+      e.append(el("strong", null, "No repositories match"));
+      e.append(document.createTextNode(days ? "Nothing " + span + ". Older repositories may match." : "Try a shorter search or another language."));
+      const acts = el("div", "acts");
+      if (days) { const b = el("button", "btn primary", "Search all time"); b.type = "button"; b.addEventListener("click", () => setRange(0)); acts.append(b); }
+      if (st.q || st.lang) { const b = el("button", "btn", "Clear filters"); b.type = "button"; b.addEventListener("click", clearAll); acts.append(b); }
+      e.append(acts); f.append(e);
+    }
+    $("rows").replaceChildren(f);
+    $("pager").hidden = pages <= 1;
+    $("pageinfo").textContent = nf.format(start + 1) + "–" + nf.format(Math.min(start + PAGE, view.length)) + " of " + nf.format(view.length);
+    $("prev").disabled = st.page === 0;
+    $("next").disabled = st.page >= pages - 1;
+  }
+
+  function langNode(r) {
+    const s = el("span", "lang");
+    if (r.lang) { const i = el("i"); i.style.background = LANG[r.lang] || "var(--muted)"; i.setAttribute("aria-hidden", "true"); s.append(i, r.lang); }
+    else s.append("—");
+    return s;
+  }
+  function row(r) {
+    const d = el("div", "row"); d.setAttribute("role", "listitem");
+    const cv = el("div", "cves");
+    for (const id of r.cves.slice(0, 2)) { const b = el("button", "cve", id); b.type = "button"; b.setAttribute("translate", "no"); b.addEventListener("click", () => showCVE(id)); cv.append(b); }
+    if (r.cves.length > 2) { const m = el("span", "more", "+" + (r.cves.length - 2) + " more"); m.title = r.cves.slice(2).join(", "); cv.append(m); }
+    d.append(cv);
+
+    const rp = el("div", "repo");
+    const slash = r.name.indexOf("/");
+    const a = el("a"); a.href = "https://github.com/" + r.name; a.target = "_blank"; a.rel = "noopener noreferrer"; a.setAttribute("translate", "no");
+    a.append(el("span", "o", r.name.slice(0, slash + 1)), r.name.slice(slash + 1));
+    rp.append(a);
+    rp.append(el("p", r.desc ? null : "none", r.desc || "No description"));
+    if (r.desc) rp.lastChild.title = r.desc;
+    const mm = el("div", "m-meta");
+    const fresh = Date.now() - Date.parse(r.created) < DAY;
+    mm.append(langNode(r), el("span", "stars", "★ " + nf.format(r.stars || 0)), el("span", "age" + (fresh ? " fresh" : ""), ago(r.created)));
+    rp.append(mm);
+    d.append(rp);
+
+    d.append(langNode(r));
+    d.append(el("span", "stars r", nf.format(r.stars || 0)));
+    const age = el("time", "age r" + (fresh ? " fresh" : ""), ago(r.created)); age.dateTime = r.created; age.title = df.format(new Date(r.created));
+    d.append(age);
+    return d;
+  }
+
+  function fail(e) {
+    $("rows").replaceChildren();
+    const box = el("div", "empty");
+    box.append(el("strong", null, "The data could not be loaded"), document.createTextNode(e.message + ". Reload the page to try again."));
+    $("rows").append(box);
+    $("count").textContent = "";
+  }
+
+  // ---------- actions ----------
+  function showCVE(id) { st.q = id; st.range = 0; st.page = 0; syncControls(); run({ push: true }); $("feed").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
+  function setRange(n) { st.range = n; syncControls(); run({ push: true }); }
+  function clearAll() { st.q = ""; st.lang = ""; st.page = 0; syncControls(); run({ push: true }); }
+
+  let deb;
+  $("q").addEventListener("input", () => {
+    clearTimeout(deb);
+    deb = setTimeout(() => {
+      const was = CVE_ONLY.test(st.q.trim());
+      st.q = $("q").value;
+      if (CVE_ONLY.test(st.q.trim()) && !was) { st.range = 0; syncControls(); $("q").value = st.q; }
+      run();
+    }, 160);
+  });
+  $("q").addEventListener("keydown", (e) => { if (e.key === "Escape" && $("q").value) { $("q").value = ""; st.q = ""; run(); } });
+  $("lang").addEventListener("change", () => { st.lang = $("lang").value; run({ push: true }); });
+  $("sort").addEventListener("change", () => { st.sort = $("sort").value; run({ push: true }); });
+  document.querySelectorAll(".range button").forEach((b) => b.addEventListener("click", () => setRange(+b.dataset.range)));
+  const toFeed = () => $("feed").scrollIntoView();
+  $("prev").addEventListener("click", () => { st.page--; render(CVE_ONLY.test(st.q.trim()) ? st.q.trim().toUpperCase() : null); writeURL(true); toFeed(); });
+  $("next").addEventListener("click", () => { st.page++; render(CVE_ONLY.test(st.q.trim()) ? st.q.trim().toUpperCase() : null); writeURL(true); toFeed(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "/" && !/^(input|select|textarea)$/i.test(document.activeElement.tagName)) { e.preventDefault(); $("q").focus(); }
+  });
+  addEventListener("popstate", () => { readURL(); syncControls(); run({ keepPage: true }); });
+
+  // ---------- boot ----------
+  (async () => {
+    readURL(); syncControls(); skeleton();
+    try {
+      index = await getJSON("data/index.json");
+      recent = await years(yearsFor(7));
+      summary();
+      await run({ keepPage: true });
+    } catch (e) { $("refresh").textContent = ""; fail(e); }
+  })();
+})();
+</script>
+</body>
+</html>

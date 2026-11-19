@@ -1,0 +1,1 @@
+[{"id":437124793,"name":"winnpixie/log4noshell","desc":"A Java Agent that disables Apache Log4J's JNDI Lookup to mitigate CVE-2021-44228 (\"Log4Shell\").","created":"2021-12-10T21:59:31Z","stars":0,"lang":"","cves":["CVE-2021-44228"]}]

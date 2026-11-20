@@ -136,7 +136,8 @@
     background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
     background-position: calc(100% - 16px) 18px, calc(100% - 11px) 18px; background-size: 5px 5px; background-repeat: no-repeat; }
   select:hover { border-color: var(--muted); }
-  .range { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
+  .chiprow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-bottom: 14px; }
+  .range { display: flex; gap: 4px; flex-wrap: wrap; }
   .range button { height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid transparent; background: none; cursor: pointer;
     color: var(--muted); font-size: 14px; font-weight: 500; transition: color .15s, background-color .15s, border-color .15s; }
   .range button:hover { color: var(--ink); background: var(--surface-2); }
@@ -245,6 +246,7 @@
     .filters { grid-template-columns: 1fr 1fr; }
     .search { grid-column: 1 / -1; }
     .search input, select { height: 44px; }
+    .chiprow { display: grid; gap: 8px; }
     .range { display: grid; grid-template-columns: repeat(4, 1fr); }
     .range button { height: 44px; padding: 0 4px; }
     .thead { display: none; }
@@ -324,11 +326,19 @@
           <option value="stars">Most stars</option>
         </select></label>
       </div>
-      <div class="range" role="group" aria-label="Created within">
-        <button type="button" data-range="1" aria-pressed="false">24 hours</button>
-        <button type="button" data-range="7" aria-pressed="true">7 days</button>
-        <button type="button" data-range="30" aria-pressed="false">30 days</button>
-        <button type="button" data-range="0" aria-pressed="false">All time</button>
+      <div class="chiprow">
+        <div class="range" role="group" aria-label="Created within">
+          <button type="button" data-range="1" aria-pressed="false">24 hours</button>
+          <button type="button" data-range="7" aria-pressed="true">7 days</button>
+          <button type="button" data-range="30" aria-pressed="false">30 days</button>
+          <button type="button" data-range="0" aria-pressed="false">All time</button>
+        </div>
+        <div class="range" role="group" aria-label="Minimum stars">
+          <button type="button" data-stars="0" aria-pressed="true">Any stars</button>
+          <button type="button" data-stars="1" aria-pressed="false" aria-label="1 or more stars">★ 1+</button>
+          <button type="button" data-stars="10" aria-pressed="false" aria-label="10 or more stars">★ 10+</button>
+          <button type="button" data-stars="100" aria-pressed="false" aria-label="100 or more stars">★ 100+</button>
+        </div>
       </div>
 
       <div class="cvebar" id="cvebar" hidden></div>
@@ -354,7 +364,7 @@
       <section id="about" class="panel about" aria-labelledby="about-h">
         <h2 id="about-h">How it works</h2>
         <p><b>Source.</b> GitHub repository search for “CVE”, kept only when the name, description or topics contain a CVE ID such as CVE-2026-12345.</p>
-        <p><b>Refresh.</b> A scheduled job runs every 90 minutes and adds repositories created since the last run.</p>
+        <p><b>Refresh.</b> A scheduled job runs every 90 minutes and adds repositories created since the last run. Star counts for the last 30 days are refreshed once a day.</p>
         <p class="warn"><b>Read before you run.</b> These are third-party repositories. Many proofs of concept are untested and some are malicious.</p>
       </section>
     </aside>
@@ -383,7 +393,7 @@
 
   const cache = {};
   let index = null, recent = [], pool = [], view = [];
-  const st = { q: "", range: 7, lang: "", sort: "new", page: 0 };
+  const st = { q: "", range: 7, stars: 0, lang: "", sort: "new", page: 0 };
 
   // ---------- helpers ----------
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -441,6 +451,8 @@
     // A full CVE ID defaults to all time: people want every repository for it.
     st.range = p.has("range") ? Math.max(0, parseInt(p.get("range"), 10) || 0) : (CVE_ONLY.test(st.q.trim()) ? 0 : 7);
     if (![0, 1, 7, 30].includes(st.range)) st.range = 7;
+    st.stars = parseInt(p.get("stars"), 10) || 0;
+    if (![0, 1, 10, 100].includes(st.stars)) st.stars = 0;
     st.lang = p.get("lang") || "";
     st.sort = p.get("sort") === "stars" ? "stars" : "new";
     st.page = Math.max(0, (parseInt(p.get("page"), 10) || 1) - 1);
@@ -450,6 +462,7 @@
     if (st.q) p.set("q", st.q);
     const defRange = CVE_ONLY.test(st.q.trim()) ? 0 : 7;
     if (st.range !== defRange) p.set("range", st.range);
+    if (st.stars) p.set("stars", st.stars);
     if (st.lang) p.set("lang", st.lang);
     if (st.sort !== "new") p.set("sort", st.sort);
     if (st.page) p.set("page", st.page + 1);
@@ -459,7 +472,8 @@
   function syncControls() {
     $("q").value = st.q;
     $("sort").value = st.sort;
-    document.querySelectorAll(".range button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.range === st.range)));
+    document.querySelectorAll("[data-range]").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.range === st.range)));
+    document.querySelectorAll("[data-stars]").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.stars === st.stars)));
   }
 
   // ---------- summary ----------
@@ -523,6 +537,7 @@
     view = pool.filter((r) => {
       if (cutoff && Date.parse(r.created) < cutoff) return false;
       if (st.lang && r.lang !== st.lang) return false;
+      if (st.stars && (r.stars || 0) < st.stars) return false;
       if (exact) return r.cves.includes(exact);
       if (!terms.length) return true;
       const hay = (r.name + " " + r.desc + " " + r.cves.join(" ") + " " + r.lang).toLowerCase();
@@ -541,7 +556,7 @@
     st.page = Math.min(st.page, pages - 1);
     const start = st.page * PAGE;
     const days = effRange();
-    const span = days === 1 ? "in the last 24 hours" : days ? "in the last " + days + " days" : "in total";
+    const span = (st.stars ? "with " + st.stars + "+ stars " : "") + (days === 1 ? "in the last 24 hours" : days ? "in the last " + days + " days" : "in total");
 
     $("feed-h").textContent = exact ? "Repositories for " + exact : st.q.trim() ? "Search results" : "Latest repositories";
     $("count").textContent = nf.format(view.length) + (view.length === 1 ? " repository " : " repositories ") + span;
@@ -560,10 +575,11 @@
     if (!view.length) {
       const e = el("div", "empty");
       e.append(el("strong", null, "No repositories match"));
-      e.append(document.createTextNode(days ? "Nothing " + span + ". Older repositories may match." : "Try a shorter search or another language."));
+      e.append(document.createTextNode(days ? "Nothing " + span + ". Older repositories may match." : st.stars ? "Nothing " + span + ". Try fewer stars." : "Try a shorter search or another language."));
       const acts = el("div", "acts");
+      if (st.stars) { const b = el("button", "btn" + (days ? "" : " primary"), "Any stars"); b.type = "button"; b.addEventListener("click", () => setStars(0)); acts.append(b); }
       if (days) { const b = el("button", "btn primary", "Search all time"); b.type = "button"; b.addEventListener("click", () => setRange(0)); acts.append(b); }
-      if (st.q || st.lang) { const b = el("button", "btn", "Clear filters"); b.type = "button"; b.addEventListener("click", clearAll); acts.append(b); }
+      if (st.q || st.lang || st.stars) { const b = el("button", "btn", "Clear filters"); b.type = "button"; b.addEventListener("click", clearAll); acts.append(b); }
       e.append(acts); f.append(e);
     }
     $("rows").replaceChildren(f);
@@ -617,7 +633,8 @@
   // ---------- actions ----------
   function showCVE(id) { st.q = id; st.range = 0; st.page = 0; syncControls(); run({ push: true }); $("feed").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
   function setRange(n) { st.range = n; syncControls(); run({ push: true }); }
-  function clearAll() { st.q = ""; st.lang = ""; st.page = 0; syncControls(); run({ push: true }); }
+  function setStars(n) { st.stars = n; syncControls(); run({ push: true }); }
+  function clearAll() { st.q = ""; st.lang = ""; st.stars = 0; st.page = 0; syncControls(); run({ push: true }); }
 
   let deb;
   $("q").addEventListener("input", () => {
@@ -632,7 +649,8 @@
   $("q").addEventListener("keydown", (e) => { if (e.key === "Escape" && $("q").value) { $("q").value = ""; st.q = ""; run(); } });
   $("lang").addEventListener("change", () => { st.lang = $("lang").value; run({ push: true }); });
   $("sort").addEventListener("change", () => { st.sort = $("sort").value; run({ push: true }); });
-  document.querySelectorAll(".range button").forEach((b) => b.addEventListener("click", () => setRange(+b.dataset.range)));
+  document.querySelectorAll("[data-range]").forEach((b) => b.addEventListener("click", () => setRange(+b.dataset.range)));
+  document.querySelectorAll("[data-stars]").forEach((b) => b.addEventListener("click", () => setStars(+b.dataset.stars)));
   const toFeed = () => $("feed").scrollIntoView();
   $("prev").addEventListener("click", () => { st.page--; render(CVE_ONLY.test(st.q.trim()) ? st.q.trim().toUpperCase() : null); writeURL(true); toFeed(); });
   $("next").addEventListener("click", () => { st.page++; render(CVE_ONLY.test(st.q.trim()) ? st.q.trim().toUpperCase() : null); writeURL(true); toFeed(); });
